@@ -4,16 +4,6 @@ format: typst
 
 # Lab 4 Worksheet - Practice
 
-* add something about loading a csv and having to use
-# Split the one column into four
-energy_raw <- separate(
-  energy_raw,
-  col = 1,
-  into = c("State", "2021", "2022", "2023"),
-  sep = ","
-)
-* make sure str extract is clear str_extract(.x, "\\d+\\.?\\d*")
-
 #### Q1. Extract and clean text patterns from strings using regular expressions.
 
 You are given a messy dataset of energy sources with inconsistent units and spacing.
@@ -25,13 +15,13 @@ energy_sources <- c("Solar (MWh)", "Wind (GWh)", "Coal (MWh)", "Hydro (kWh)")
 a.  Use str_detect() to identify all energy sources that contain the substring "Wind" or "Hydro" (hint: use the \| operator in regex).
 
 ```{r}
-
+str_detect(energy_sources, pattern = c("Wind|Hydro"))
 ```
 
 b.  Extract the unit type (e.g., MWh, GWh, kWh) using str_extract(). Make sure your pattern handles extra spaces or hyphens.
 
 ```{r}
-
+str_extract(energy_sources, pattern = "\\b\\([MGk]Wh\\(\\b")
 ```
 
 c.  Clean the names to keep only the energy source name, trimming whitespace and removing parentheses.
@@ -43,6 +33,7 @@ c.  Clean the names to keep only the energy source name, trimming whitespace and
 d.  Create a clean tibble called energy_clean with two columns: source and unit.
 
 ```{r}
+tibble(energy_clean = )
 
 ```
 
@@ -70,31 +61,31 @@ states <- states |>
 regions <- data.frame(state = state.name, region = state.region)
 
 states
-
+regions
 ```
 
 a.  Perform a left join to combine socioeconomic and regional data.
 
 ```{r}
-
+left_join(states, regions, join_by(state))
 ```
 
 b.  Perform an inner join. How many rows remain, and why is it the same or different?
 
 ```{r}
-
+inner_join(states, regions, join_by(state))
+# 50 rows
 ```
-
 
 c.  Perform an anti join to check if any state names don’t match between datasets. What might cause mismatches like this in real projects?
 
 ```{r}
-
+anti_join(states, regions, join_by(state))
 ```
 
 d.  Discussion: Why would you prefer a left join over an inner join when merging state-level datasets?\
     \
-e. Use pivot_longer() to make the socioeconomic data longer.\
+e.  Use pivot_longer() to make the socioeconomic data longer.\
 
 ```{r}
 
@@ -118,19 +109,19 @@ sales <- tibble(
 sales
 ```
 
-a. Convert the dataset from wide (one column per month) to long (one row per month per store).
+a.  Convert the dataset from wide (one column per month) to long (one row per month per store).
 
 ```{r}
 
 ```
 
-b. Clean month names by removing _Sales.
+b.  Clean month names by removing \_Sales.
 
 ```{r}
 
 ```
 
-c. Convert the long dataset back to wide, with one column per month.
+c.  Convert the long dataset back to wide, with one column per month.
 
 ```{r}
 

@@ -1,6 +1,6 @@
 ---
 title: "EV Power - Lab 4 Project Report"
-format: typst
+format: pdf 
 ---
 
 # Example Solution 1
@@ -8,27 +8,158 @@ format: typst
 ## **Part 0: libraries**
 
 ```{r}
-
+library(tidyverse)
 ```
 
 ## **Part 1:** **Defining Research Question**
 
-Chosen Question:
+Chosen Question:Do states with higher renewable usage have lower average electricity prices?
 
 ## **Part 2: Data Preparation and Cleaning**
 
 ```{r}
+renew_2021_raw <- read_csv("data/renew-use-2021.csv")
+renew_2022_raw <- read_csv("data/renew-use-2022.csv")
+renew_2023_raw <- read_csv("data/renew-use-2023.csv")
+avg_price_2021_to_2023_raw <- read_csv("data/av-energy-price-2021-2023.csv")
+renew_2021_clean <- renew_2021_raw |>
+    mutate(
+        across(Renewable_Use_2021, ~ str_replace_all(.,"[A-Z|a-z|~|\\$|\\.|≈]", "")),
+        Renewable_Use_2021 = as.numeric(Renewable_Use_2021)
+        )|>
+    group_by(State)|>
+    summarise(total_use_2021 = sum(Renewable_Use_2021))|>
+    arrange(desc(total_use_2021))|>
+    slice(-1)  
+renew_2021_clean
+#renewable 2022
+renew_2022_clean <- renew_2022_raw |>
+    mutate(
+        across(Renewable_Use_2022, ~ str_replace_all(.,"[A-Z|a-z|~|\\$|\\.|≈]", "")),
+        Renewable_Use_2022 = as.numeric(Renewable_Use_2022)
+        )|>
+    group_by(State)|>
+    summarise(total_use_2022 = sum(Renewable_Use_2022))|>
+    arrange(desc(total_use_2022))|>
+    slice(-1)
+renew_2022_clean
+#renewable 2023
+renew_2023_clean <- renew_2023_raw |>
+    mutate(
+        across(Renewable_Use_2023, ~ str_replace_all(.,"[A-Z|a-z|~|\\$|\\.|≈]", "")),
+        Renewable_Use_2023 = as.numeric(Renewable_Use_2023)
+        )|>
+    group_by(State)|>
+    summarise(total_use_2023 = sum(Renewable_Use_2023))|>
+    arrange(desc(total_use_2023))|>
+    slice(-1)
+renew_2023_clean
+avg_price_2021_to_2023_raw
+# Try to filter the renewable column to only digit
+colnames(avg_price_2021_to_2023_raw) <- c('x')
+
+header_row <- avg_price_2021_to_2023_raw[2,1]
+column_names <- str_split(header_row, ',')[[1]]
+col1 <- column_names[1]
+col1
+
+avg_price_2021_to_2023_clean <- avg_price_2021_to_2023_raw |>
+    slice(3:nrow(avg_price_2021_to_2023_raw))|>
+    mutate(
+        across(everything(), ~ str_replace_all(.,"\\$", "")),
+        across(everything(), ~ str_replace_all(.,"about","")),
+        across(everything(), ~ str_replace_all(.,"per MMBtu", "")),
+        across(everything(), ~str_replace_all(.,"USD","")),
+        across(everything(), ~str_replace_all(.,"≈", "")),
+        across(everything(), ~str_replace_all(.,"est\\.","")),
+        across(everything(), ~str_replace_all(.," ",""))
+        )|>
+    mutate(
+    col1 = str_extract(x, "^[A-Z]{2}"),                    
+    col2 = str_extract(x, "(?<=^[A-Z]{2},)[^,]+"),     
+    col3 = str_extract(x, "(?<=,)[^,]+(?=,[^,]+$)"),    
+    col4 = str_extract(x, "[^,]+$"),
+    col2 = as.numeric(col2),
+    col3 = as.numeric(col3),
+    col4 = as.numeric(col4)
+  ) |>
+  select(-1) 
+  colnames(avg_price_2021_to_2023_clean) <- column_names
+
+avg_price_2021_to_2023_clean
 
 ```
 
 ## **Part 3: Joining / Pivoting Datasets for Analysis**
 
 ```{r}
+#For 2021 table
+avg_price_2021 <- avg_price_2021_to_2023_clean|>
+    select('State','2021')|>
+    rename('Average price 2021' = '2021')
+avg_price_2021
+tbl_2021 <- left_join(renew_2021_clean, avg_price_2021)
+tbl_2021
+#For 2022 table
+avg_price_2022 <- avg_price_2021_to_2023_clean|>
+    select('State','2022')|>
+    rename('Average price 2022' = '2022')
+avg_price_2022
+tbl_2022 <- left_join(renew_2022_clean, avg_price_2022)
+tbl_2022
+#For 2023 table
+avg_price_2023 <- avg_price_2021_to_2023_clean|>
+    select('State','2023')|>
+    rename('Average price 2023' = '2023')
+avg_price_2023
+tbl_2023 <- left_join(renew_2023_clean, avg_price_2023)
+tbl_2023
 
 ```
 
 ## **Part 4: Mapping Visualization**
 
 ```{r}
-
+#Map 2021
+ggplot(tbl_2021, aes(x = total_use_2021, y = `Average price 2021`)) +
+  geom_point(color = "steelblue", size = 2) +
+  labs(
+    title = "Total Renewable Usage vs. Average Electricity Price (2021)",
+    x = "Total Renewable Usage (MWh or %)",
+    y = "Average Electricity Price"
+  ) +
+  scale_y_continuous(
+    breaks = c(10, 15, 20, 25, 30),
+    limits = c(10, 30)           
+  ) +
+  theme(axis.text.y = element_text(size = 8))
+#Map 2022
+ggplot(tbl_2022, aes(x = total_use_2022, y = `Average price 2022`)) +
+  geom_point(color = "steelblue", size = 2) +
+  labs(
+    title = "Total Renewable Usage vs. Average Electricity Price (2022)",
+    x = "Total Renewable Usage (MWh or %)",
+    y = "Average Electricity Price"
+  ) +
+  scale_y_continuous(
+    breaks = c(10, 15, 20, 25, 30),
+    limits = c(10, 30)           
+  ) +
+  theme(axis.text.y = element_text(size = 8))
+#Map 2023
+ggplot(tbl_2023, aes(x = total_use_2023, y = `Average price 2023`)) +
+  geom_point(color = "steelblue", size = 2) +
+  labs(
+    title = "Total Renewable Usage vs. Average Electricity Price (2023)",
+    x = "Total Renewable Usage (MWh or %)",
+    y = "Average Electricity Price"
+  ) +
+  scale_y_continuous(
+    breaks = c(10, 15, 20, 25, 30),
+    limits = c(10, 30)           
+  ) +
+  theme(axis.text.y = element_text(size = 8))
 ```
+
+## **Part 5: Final Deliverable**
+#### To answer this question, I worked on cleaning and joining two datasets: renewable energy usage and average electricity price for each state and year. Since the average price table was messy, I created a new data frame and separated the state names and years into different columns. After that, I joined the average electricity price table with the renewable usage table by state for each year.Then, I created a scatter plot to visualize whether states with higher renewable usage tend to have lower electricity prices. The plot shows that most states with lower renewable usage tend to have higher electricity prices. However, California, which has the highest renewable usage, does not have the lowest electricity price. This suggests that other factors, such as temperature, population density, or household size, may also affect electricity prices.
